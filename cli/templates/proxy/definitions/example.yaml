@@ -1,0 +1,80 @@
+- name: {{capability_prefix}}.query
+  version: "1.0"
+  purpose: "Query data from the external service via the local read-replica."
+  when_to_use: |
+    Use {{capability_prefix}}.query to read data from the synced local copy.
+    Data is kept up-to-date by the sync adapter (configurable interval).
+    For write operations, use {{capability_prefix}}.write instead.
+  inputs:
+    - name: query
+      type: String
+      required: true
+      description: "The query string or filter expression."
+    - name: limit
+      type: Integer
+      required: false
+      default: 100
+      description: "Maximum number of results to return."
+  outputs:
+    - name: results
+      type: Array
+      description: "Array of matching records from the local read-replica."
+    - name: count
+      type: Integer
+      description: "Total number of matching records."
+    - name: synced_at
+      type: DateTime
+      description: "Timestamp of the last sync from the external service."
+  side_effects: []
+  common_patterns:
+    - description: "Query with filter"
+      steps:
+        - "{{capability_prefix}}.query(query='status:active', limit=50)"
+  errors:
+    - type: SyncStale
+      description: "Local data is older than the configured staleness threshold."
+      recovery:
+        - action: retry
+          description: "Wait for the next sync cycle or trigger a manual sync."
+  permission_tier: autonomous
+  tags: ["{{capability_prefix}}", "query", "read"]
+
+- name: {{capability_prefix}}.write
+  version: "1.0"
+  purpose: "Write data to the external service via the write proxy buffer."
+  when_to_use: |
+    Use {{capability_prefix}}.write to modify data in the external service.
+    Writes are buffered and may require human approval before execution.
+    Use {{capability_prefix}}.query to verify the result after the write is executed.
+  inputs:
+    - name: action
+      type: String
+      required: true
+      description: "The write action to perform (e.g., 'create', 'update', 'delete')."
+    - name: data
+      type: Object
+      required: true
+      description: "The data payload for the write operation."
+  outputs:
+    - name: write_id
+      type: String
+      description: "Unique identifier for the buffered write operation."
+    - name: status
+      type: String
+      description: "Status of the write: 'buffered', 'approved', 'executed', 'rejected'."
+  side_effects:
+    - description: "Buffers a write operation for approval and execution against the external service."
+      reversible: true
+  common_patterns:
+    - description: "Create a record"
+      steps:
+        - "{{capability_prefix}}.write(action='create', data={...})"
+        - "Wait for approval if required by policy"
+  errors:
+    - type: WriteRejected
+      description: "The write was rejected by the approval process."
+      recovery:
+        - action: retry
+          description: "Modify the data and submit a new write."
+  permission_tier: approval_required
+  tags: ["{{capability_prefix}}", "write", "mutating"]

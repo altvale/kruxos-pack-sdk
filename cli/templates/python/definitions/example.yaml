@@ -1,0 +1,35 @@
+- name: {{capability_prefix}}.example
+  version: "1.0"
+  purpose: "Example capability for the {{pack_name}} pack. Replace with your actual capability."
+  when_to_use: |
+    Use {{capability_prefix}}.example when you need to perform the example action.
+    Replace this guidance with real usage instructions for your capability.
+  inputs:
+    - name: input_value
+      type: String
+      required: true
+      description: "The primary input value for this capability."
+    - name: options
+      type: Object
+      required: false
+      description: "Optional configuration object for the operation."
+  outputs:
+    - name: result
+      type: String
+      description: "The result of the operation."
+    - name: metadata
+      type: Object
+      description: "Additional metadata about the operation."
+  side_effects: []
+  common_patterns:
+    - description: "Basic usage"
+      steps:
+        - "{{capability_prefix}}.example(input_value='hello') to run the operation"
+  errors:
+    - type: InvalidInput
+      description: "The input value was empty or malformed."
+      recovery:
+        - action: retry
+          description: "Provide a non-empty input_value string."
+  permission_tier: autonomous
+  tags: ["{{capability_prefix}}", "example"]

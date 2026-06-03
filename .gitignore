@@ -1,0 +1,18 @@
+# Node
+node_modules/
+*.tgz
+npm-debug.log*
+
+# Build / publish artifacts
+dist/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# OS / editor
+.DS_Store
+*.log

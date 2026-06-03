@@ -1,0 +1,47 @@
+{
+  "name": "@kruxos/pack-sdk",
+  "version": "0.0.2",
+  "description": "Developer tooling for creating, testing, and publishing KruxOS capability packs",
+  "bin": {
+    "kruxos-pack": "src/index.js"
+  },
+  "files": [
+    "src",
+    "templates"
+  ],
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "lint": "echo 'No linter configured yet'"
+  },
+  "keywords": [
+    "kruxos",
+    "capability",
+    "pack",
+    "sdk",
+    "ai-agents",
+    "cli"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/altvale/kruxos-pack-sdk.git",
+    "directory": "cli"
+  },
+  "homepage": "https://github.com/altvale/kruxos-pack-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/altvale/kruxos-pack-sdk/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "commander": "^12.0.0",
+    "js-yaml": "^4.1.0",
+    "chokidar": "^3.6.0"
+  },
+  "devDependencies": {}
+}
