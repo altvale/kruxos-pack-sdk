@@ -1,0 +1,23 @@
+name: rss-fetch
+version: "1.0.0"
+author: "KruxOS"
+description: "Fetch RSS and Atom feeds and return their entries as ready-to-use structured fields for AI agents."
+kruxos_version: ">=0.0.2"
+pack_type: python
+
+capabilities:
+  - definitions/rss.fetch.yaml
+
+dependencies: []
+
+secrets_required: []
+
+security:
+  network_egress:
+    - "*:80"
+    - "*:443"
+  filesystem: workspace_only
+  syscalls: []
+
+default_policies:
+  rss.fetch: notify

@@ -1,0 +1,87 @@
+- name: rss.fetch
+  version: "1.1"
+  purpose: "Fetch an RSS or Atom feed by URL and return its entries as ready-to-use structured fields (title, link, summary, published, id)."
+  when_to_use: |
+    Use rss.fetch when the agent needs structured data from a feed URL.
+    Typical missions: "summarise the last 5 entries from <feed>",
+    "poll <feed> for items published since <timestamp>".
+
+    The output is already parsed — entries[].title / .link / .summary are
+    plain strings, so the agent never writes XML-parsing code.
+
+    Do NOT use rss.fetch for arbitrary HTML scraping — use http.fetch for
+    raw HTML and parse downstream.
+    Do NOT use rss.fetch on auth-required feeds — use http.fetch with the
+    appropriate headers instead.
+  inputs:
+    - name: url
+      type: String
+      required: true
+      description: "Public HTTP or HTTPS feed URL. file:// and other schemes are rejected at the input boundary (InvalidURL, raised synchronously)."
+    - name: limit
+      type: Integer
+      required: false
+      description: "Maximum entries to return. Default 20, max 100. Out-of-range values are clamped silently."
+    - name: timeout
+      type: Integer
+      required: false
+      description: "Request timeout in seconds. Default 15, max 60. Lower for monitoring loops, higher for slow feeds."
+  outputs:
+    - name: entries
+      type: Array
+      description: "Newest-first feed entries (capped at `limit`). Each is an object with ready-to-use string fields: title, link, summary, published, id. Missing fields are empty strings, never null."
+    - name: entry_count
+      type: Integer
+      description: "Number of entries returned — the agent need not call len()."
+    - name: truncated
+      type: Boolean
+      description: "True if the feed held more entries than `limit` — the agent need not compare counts."
+    - name: cache_hint_minutes
+      type: Integer
+      description: "Suggested minutes to wait before re-polling, parsed from the feed's RSS 2.0 <ttl> or its sy:updatePeriod + sy:updateFrequency. 0 when the feed gives no hint."
+    - name: feed_url
+      type: String
+      description: "The final feed URL after following redirects (may differ from the input url)."
+    - name: feed_title
+      type: String
+      description: "The feed's channel/feed title — the agent need not re-parse it from entries."
+  side_effects:
+    - description: "Issues one HTTP/HTTPS GET to the feed URL (with redirect follow)."
+      reversible: true
+  common_patterns:
+    - description: "Summarise the latest N entries"
+      steps:
+        - "rss.fetch(url='https://example.com/feed.xml', limit=5)"
+        - "Summarise the returned `entries` (already newest-first)"
+    - description: "Poll a feed for items newer than a cutoff"
+      steps:
+        - "rss.fetch(url=feed_url)"
+        - "Keep entries whose `published` is later than your last-seen timestamp"
+        - "Record the newest `published` as the next cutoff"
+    - description: "Cache-aware polling loop"
+      steps:
+        - "rss.fetch(url=feed_url)"
+        - "Process new `entries`"
+        - "Sleep `cache_hint_minutes` (fall back to your own interval when it is 0) before the next fetch"
+    - description: "Detect truncation and widen the window"
+      steps:
+        - "rss.fetch(url=feed_url, limit=20)"
+        - "If `truncated` is true, refetch with a higher `limit` (up to 100) to see older entries"
+  errors:
+    - type: InvalidURL
+      description: "The url is empty, malformed, or uses a non-http(s) scheme (e.g. file://). Raised synchronously, before any network work."
+      recovery:
+        - action: abort
+          description: "URL is structurally wrong. Do not retry. Treat the source as suspect."
+    - type: FetchFailed
+      description: "The feed could not be retrieved — DNS, TLS, connection failure, timeout, or an HTTP error status."
+      recovery:
+        - action: retry
+          description: "Single retry after 5-30s. If second attempt also fails, treat as permanent."
+    - type: ParseFailed
+      description: "The response was retrieved but is not a parseable RSS or Atom feed."
+      recovery:
+        - action: abort
+          description: "URL does not serve a feed. Try http.fetch instead to get raw bytes."
+  permission_tier: notify
+  tags: ["rss", "atom", "feed", "network"]
