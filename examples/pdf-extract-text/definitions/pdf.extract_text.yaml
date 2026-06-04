@@ -1,0 +1,62 @@
+- name: pdf.extract_text
+  version: "1.0"
+  purpose: "Extract plain text from a PDF file in the agent's workspace, with page count and truncation info."
+  when_to_use: |
+    Use pdf.extract_text when an agent needs to read or reason over the text
+    content of a PDF already present in its workspace — e.g. "summarise this
+    contract", "what does page 2 say".
+
+    Typical: pdf.extract_text(path='report.pdf') then summarise the returned text.
+
+    Do NOT use pdf.extract_text on scanned / image-only PDFs — pages without a
+    text layer return empty; use an OCR capability instead.
+    Do NOT use it to fetch a PDF from the internet — download it first with a
+    network capability, then pass the local path here.
+  inputs:
+    - name: path
+      type: String
+      required: true
+      description: "Path to a PDF file in the workspace (absolute, or relative to the workspace root)."
+    - name: max_pages
+      type: Integer
+      required: false
+      description: "Maximum pages to extract. Default 0 = all pages. Clamped to 1000."
+  outputs:
+    - name: text
+      type: String
+      description: "Extracted text; pages joined with a form-feed (\\f) separator."
+    - name: page_count
+      type: Integer
+      description: "Total pages in the document."
+    - name: pages_extracted
+      type: Integer
+      description: "Pages actually extracted (< page_count when max_pages is set)."
+    - name: char_count
+      type: Integer
+      description: "Length of the returned text — agent need not call len()."
+    - name: truncated
+      type: Boolean
+      description: "True if max_pages stopped extraction before the last page."
+  side_effects: []
+  common_patterns:
+    - description: "Read and summarise a whole PDF"
+      steps:
+        - "pdf.extract_text(path='paper.pdf')"
+        - "summarise the returned `text`"
+    - description: "Read only the first pages of a large PDF"
+      steps:
+        - "pdf.extract_text(path='book.pdf', max_pages=10)"
+        - "check `truncated` to know whether more pages remain"
+  errors:
+    - type: InvalidPath
+      description: "The path does not exist, is not a file, or is not a .pdf."
+      recovery:
+        - action: abort
+          description: "Path is wrong. Do not retry the same path; verify the file exists in the workspace."
+    - type: ParseFailed
+      description: "The file exists but could not be parsed as a PDF (corrupt or not a PDF)."
+      recovery:
+        - action: abort
+          description: "Not a valid PDF — do not retry the same bytes. If it is actually plain text or HTML, read it with a text/file capability instead; if it was downloaded, the file may be truncated — re-fetch it."
+  permission_tier: autonomous
+  tags: ["pdf", "extract", "document", "text"]

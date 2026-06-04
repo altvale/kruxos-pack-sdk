@@ -1,0 +1,22 @@
+name: pdf-extract-text
+version: "1.0.0"
+author: "KruxOS"
+description: "Extract text from PDF documents so agents can read and reason over their contents."
+kruxos_version: ">=0.0.2"
+pack_type: python
+
+capabilities:
+  - definitions/pdf.extract_text.yaml
+
+dependencies:
+  - pypdf>=4.0
+
+secrets_required: []
+
+security:
+  network_egress: []
+  filesystem: workspace_only
+  syscalls: []
+
+default_policies:
+  pdf.extract_text: autonomous
