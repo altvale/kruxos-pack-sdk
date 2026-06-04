@@ -57,6 +57,7 @@ Run `kruxos-pack <command> --help` for options.
 ## Repository layout
 
 - `cli/` — the `kruxos-pack` CLI (Node.js), including `cli/templates/` pack scaffolds
+- `examples/` — complete worked example packs to read and copy. `examples/rss-fetch/` is the canonical exercise of all seven [Capability Design Guidelines](https://github.com/altvale/kruxos/blob/main/docs/public/docs/pack-authors/capability-design-guidelines.md) — see its `definitions/rss.fetch.yaml`.
 - `runner/` — `pack_runner.py`, the Python pack executor KruxOS invokes
 - `testing/` — the pack test harness
 
